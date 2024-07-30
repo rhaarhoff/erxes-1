@@ -3,11 +3,10 @@ services:
   mongo:
     hostname: mongo
     image: mongo:4.0.10
-    # container_name: mongo
     ports:
       - "27017:27017"
     networks:
-      - erxes-net
+      - backend_network
     healthcheck:
       test: test $$(echo "rs.initiate().ok || rs.status().ok" | mongo --quiet) -eq 1
       interval: 2s
@@ -17,31 +16,37 @@ services:
     extra_hosts:
       - "mongo:127.0.0.1"
     volumes:
-      - ./data/db:/data/db
+      - erxes_mongo_data:/data/db
 
   redis:
     image: 'redis'
-    # container_name: redis
-    # command: redis-server --requirepass pass
     ports:
       - "6379:6379"
     networks:
-      - erxes-net
+      - backend_network
+    volumes:
+      - erxes_redis_data:/data
 
   rabbitmq:
     image: rabbitmq:3.7.17-management
-    # container_name: rabbitmq
     restart: unless-stopped
     hostname: rabbitmq
     ports:
       - "15672:15672"
       - "5672:5672"
     networks:
-      - erxes-net
-    # RabbitMQ data will be saved into ./rabbitmq-data folder.
+      - backend_network
     volumes:
-      - ./rabbitmq-data:/var/lib/rabbitmq
+      - erxes_rabbitmq_data:/var/lib/rabbitmq
 
 networks:
-  erxes-net:
-    driver: bridge
+  backend_network:
+    external: true
+
+volumes:
+  erxes_mongo_data:
+    driver: local
+  erxes_redis_data:
+    driver: local
+  erxes_rabbitmq_data:
+    driver: local
